@@ -1,47 +1,45 @@
-name: Gold & Coin Bot
+name: GoldPriceBot
 
 on:
   schedule:
-    - cron: "0 * * * *"  # اجرا هر ساعت
+    # اجرای دقیق بر اساس ساعت‌های داده شده
+    - cron: "0 6 * * *"
+    - cron: "0 8 * * *"
+    - cron: "0 9 * * *"
+    - cron: "0 10 * * *"
+    - cron: "0 11 * * *"
+    - cron: "30 11 * * *"
+    - cron: "0 12 * * *"
+    - cron: "0 13 * * *"
+    - cron: "0 14 * * *"
+    - cron: "0 15 * * *"
+    - cron: "0 16 * * *"
+    - cron: "0 17 * * *"
+    - cron: "30 17 * * *"
+    - cron: "0 18 * * *"
+    - cron: "0 19 * * *"
+    - cron: "0 20 * * *"
+    - cron: "0 22 * * *"
+    - cron: "0 0 * * *"
+  # اجرای دستی برای تست
   workflow_dispatch:
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install Google Chrome
+      - name: Install Chrome
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip
-          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo apt-get install -y ./google-chrome-stable_current_amd64.deb
-          google-chrome --version
+          sudo apt-get install -y chromium-browser chromium-chromedriver
 
-      - name: Install matching ChromeDriver
+      - name: Install Python dependencies
         run: |
-          CHROME_VERSION=$(google-chrome --version | awk '{print $3}')
-          MAJOR_VERSION=$(echo $CHROME_VERSION | cut -d'.' -f1)
-          DRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_${MAJOR_VERSION}")
-          echo "Installing ChromeDriver version $DRIVER_VERSION for Chrome $CHROME_VERSION"
-          wget https://edgedl.me.gvt1.com/chrome/chrome-for-testing/${DRIVER_VERSION}/linux64/chromedriver-linux64.zip
-          unzip chromedriver-linux64.zip
-          sudo mv chromedriver-linux64/chromedriver /usr/bin/chromedriver
-          sudo chmod +x /usr/bin/chromedriver
-          chromedriver --version
+          python3 -m pip install --upgrade pip
+          pip install selenium requests
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run bot
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          CHANNEL_USERNAME: ${{ secrets.CHANNEL_USERNAME }}
-        run: python main.py
+      - name: Run main.py
+        run: python3 main.py
