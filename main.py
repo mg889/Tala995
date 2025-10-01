@@ -6,13 +6,28 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 import time
 
-# ----- تنظیمات تلگرام (هاردکد شده طبق توافق) -----
+# ----- تنظیمات تلگرام -----
 TOKEN = "8267872006:AAFV-CA7QtN1X8AkRPIgfZPdApi6OFdYnRM"
 CHAT_ID = "@tala995"
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
 
-# فایل ذخیره آخرین قیمت‌ها
+# محل ذخیره آخرین قیمت‌ها
 LAST_FILE = "last_prices.json"
+
+
+def normalize_prices(data):
+    """
+    یکنواخت‌سازی داده‌ها: حذف فاصله‌ها، جداکننده هزار،
+    و کاراکترهای اضافی برای مقایسه دقیق.
+    """
+    norm = {}
+    for k, v in data.items():
+        name = k.strip()
+        # حذف کاما و جداکننده هزار فارسی
+        price = v.strip().replace(',', '').replace('٬', '')
+        norm[name] = price
+    # مرتب‌سازی بر اساس نام برای جلوگیری از اختلاف ترتیب
+    return dict(sorted(norm.items()))
 
 
 def send_to_telegram(text):
@@ -35,7 +50,7 @@ def scrape_prices():
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
     driver.get("https://www.estjt.ir/")
-    time.sleep(5)  # برای لود کامل صفحه
+    time.sleep(5)  # انتظار برای بارگذاری کامل صفحه
 
     tables = driver.find_elements(By.TAG_NAME, "table")
     data = {}
@@ -43,8 +58,7 @@ def scrape_prices():
         rows = table.find_elements(By.TAG_NAME, "tr")
         for row in rows:
             cols = row.find_elements(By.TAG_NAME, "td")
-            if len(cols) == 3:
-                # ستون 0: نام، ستون 1: قیمت، ستون 2: تغییرات
+            if len(cols) == 3:  # ستون‌های نام، قیمت، تغییرات
                 name = cols[0].text.strip()
                 price = cols[1].text.strip()
                 if name and price:
@@ -54,19 +68,22 @@ def scrape_prices():
 
 
 def prices_changed(new_data):
-    """بررسی اینکه قیمت‌ها تغییر کرده‌اند یا نه"""
+    """بررسی تغییر واقعی قیمت‌ها"""
+    new_data = normalize_prices(new_data)
     if not os.path.exists(LAST_FILE):
         return True
     try:
         with open(LAST_FILE, "r", encoding="utf-8") as f:
             last_data = json.load(f)
+        last_data = normalize_prices(last_data)
         return new_data != last_data
     except:
         return True
 
 
 def save_prices(data):
-    """ذخیره قیمت‌ها برای دفعه بعد"""
+    """ذخیره قیمت‌ها بعد از ارسال"""
+    data = normalize_prices(data)
     with open(LAST_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
@@ -75,7 +92,7 @@ if __name__ == "__main__":
     prices = scrape_prices()
 
     if prices_changed(prices):
-        # بخش‌بندی پیام
+        # دسته‌بندی پیام‌ها
         message_gold = "🏆 قیمت طلا:\n"
         message_coin = "💰 قیمت سکه:\n"
 
