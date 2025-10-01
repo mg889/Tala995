@@ -33,24 +33,27 @@ try:
     driver.get("https://www.estjt.ir/")
     time.sleep(5)  # زمان برای لود کامل صفحه
 
-    final_message = ""
+    message_gold = "🏆 قیمت طلا:\n"
+    message_coin = "💰 قیمت سکه:\n"
 
-    # پیدا کردن دو جدول قیمت طلا و قیمت سکه
     tables = driver.find_elements(By.TAG_NAME, "table")
-    for table in tables:
+    for table_index, table in enumerate(tables):
         rows = table.find_elements(By.TAG_NAME, "tr")
         for row in rows:
             cols = row.find_elements(By.TAG_NAME, "td")
-            if len(cols) >= 2:
-                name = cols[-1].text.strip()    # ستون نام (سمت راست)
-                price = cols[-2].text.strip()   # ستون قیمت (وسط)
-                if name and price:
-                    final_message += f"{name}: {price}\n"
+            if len(cols) == 3:  # سه ستون داریم: تغییرات، قیمت، نام
+                change = cols[0].text.strip()  # تغییرات (چپ) - استفاده نمی‌کنیم
+                price = cols[1].text.strip()   # قیمت (وسط)
+                name = cols[2].text.strip()    # نام (راست)
 
-    if final_message.strip():
-        send_to_telegram(final_message.strip())
-    else:
-        send_to_telegram("⚠️ هیچ داده‌ای پیدا نشد.")
+                if name and price:
+                    if table_index == 0:  # جدول اول = طلا
+                        message_gold += f"{name}: {price}\n"
+                    elif table_index == 1:  # جدول دوم = سکه
+                        message_coin += f"{name}: {price}\n"
+
+    final_message = message_gold + "\n" + message_coin
+    send_to_telegram(final_message.strip())
 
 finally:
     driver.quit()
