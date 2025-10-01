@@ -32,20 +32,26 @@ service = Service("/usr/bin/chromedriver")  # مسیر کروم‌درایور �
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
 try:
-    driver.get("https://www.tgju.org")  # نمونه سایت قیمت
-    time.sleep(5)  # کمی صبر برای لود
+    driver.get("https://www.estjt.ir")
+    time.sleep(5)  # صبر برای لود کامل
 
     rows = driver.find_elements(By.CSS_SELECTOR, "table.data-table tr")
     prices_text = ""
+    keywords = ["سکه", "طلای", "نیم", "ربع", "گرم"]  # کلیدواژه‌های موردنظر
+
     for row in rows:
         cols = row.find_elements(By.TAG_NAME, "td")
         if len(cols) >= 2:
             name = cols[0].text.strip()
             price = cols[1].text.strip()
-            if name and price:
+            if any(keyword in name for keyword in keywords):
                 prices_text += f"{name}: {price}\n"
 
-    send_to_telegram(prices_text.strip())
+    # ارسال فقط اگر داده‌ای پیدا شده باشد
+    if prices_text.strip():
+        send_to_telegram(prices_text.strip())
+    else:
+        send_to_telegram("⚠️ هیچ داده‌ای برای طلا/سکه پیدا نشد.")
 
 finally:
     driver.quit()
