@@ -6,7 +6,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 
-# گرفتن مقادیر از Secrets گیـت‌هاب
+# مقادیر از Secrets گیـت‌هاب
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHANNEL_USERNAME = os.getenv("CHANNEL_USERNAME")
 SITE_URL = "https://www.estjt.ir/"
@@ -17,15 +17,16 @@ def fetch_prices():
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    # مسیر باینری Google Chrome در GitHub Actions
+
+    # مسیر اجرایی Google Chrome در GitHub Actions
     options.binary_location = "/usr/bin/google-chrome"
 
-    # مسیر chromedriver
+    # مسیر chromedriver دانلود شده در Workflow
     service = Service("/usr/bin/chromedriver")
 
     driver = webdriver.Chrome(service=service, options=options)
     driver.get(SITE_URL)
-    time.sleep(5)  # صبر برای لود کامل JavaScript
+    time.sleep(5)  # صبر برای لود کامل JS
 
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
@@ -63,14 +64,4 @@ def save_prices(text):
 
 def main():
     gold, coin = fetch_prices()
-    text = "\n".join(gold) + "\n\n" + "\n".join(coin)
-
-    if has_prices_changed(text):
-        send_to_channel(text)
-        save_prices(text)
-        print("✅ Prices updated and sent to Telegram.")
-    else:
-        print("ℹ️ No price change detected.")
-
-if __name__ == "__main__":
-    main()
+    text = "\n".join(gold)
