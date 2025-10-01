@@ -2,7 +2,7 @@ name: Gold & Coin Bot
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 * * * *'   # هر ساعت اجرا می‌شود
   workflow_dispatch:
 
 jobs:
@@ -21,13 +21,13 @@ jobs:
       - name: Install Chrome & Chromedriver
         run: |
           sudo apt-get update
-          sudo apt-get install -y unzip
-          sudo apt-get install -y wget
+          sudo apt-get install -y wget unzip
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo apt-get install -y ./google-chrome-stable_current_amd64.deb
           CHROME_VERSION=$(google-chrome --version | awk '{print $3}')
-          wget https://chromedriver.storage.googleapis.com/${CHROME_VERSION}/chromedriver_linux64.zip || \
-              wget https://chromedriver.storage.googleapis.com/$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip
+          # تلاش برای دانلود نسخه دقیق ChromeDriver
+          DRIVER_VERSION_URL="https://chromedriver.storage.googleapis.com/${CHROME_VERSION}/chromedriver_linux64.zip"
+          wget "$DRIVER_VERSION_URL" || wget "https://chromedriver.storage.googleapis.com/$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip"
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/bin/chromedriver
           sudo chmod +x /usr/bin/chromedriver
