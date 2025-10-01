@@ -28,17 +28,18 @@ chrome_options.add_argument("--disable-dev-shm-usage")
 
 service = Service("/usr/bin/chromedriver")  # مسیر کروم‌درایور در GitHub Actions
 
-# ----- اجرای مرورگر -----
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
 try:
-    driver.get("https://www.estjt.ir")
+    # بارگذاری صفحه اصلی سایت
+    driver.get("https://www.estjt.ir/")
     time.sleep(5)  # صبر برای لود کامل
 
-    rows = driver.find_elements(By.CSS_SELECTOR, "table.data-table tr")
     prices_text = ""
-    keywords = ["سکه", "طلای", "نیم", "ربع", "گرم"]  # کلیدواژه‌های موردنظر
+    keywords = ["سکه", "طلای", "نیم", "ربع", "گرم"]
 
+    # پیدا کردن تمام ردیف‌های جدول
+    rows = driver.find_elements(By.CSS_SELECTOR, "table tr")
     for row in rows:
         cols = row.find_elements(By.TAG_NAME, "td")
         if len(cols) >= 2:
@@ -47,7 +48,6 @@ try:
             if any(keyword in name for keyword in keywords):
                 prices_text += f"{name}: {price}\n"
 
-    # ارسال فقط اگر داده‌ای پیدا شده باشد
     if prices_text.strip():
         send_to_telegram(prices_text.strip())
     else:
