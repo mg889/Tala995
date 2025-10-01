@@ -5,6 +5,22 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+
+def fetch_prices():
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+
+    # تغییر مسیر باینری در GitHub Actions
+    options.binary_location = "/usr/bin/google-chrome"
+
+    service = Service("/usr/bin/chromedriver")
+    driver = webdriver.Chrome(service=service, options=options)
+
+
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHANNEL_USERNAME = os.getenv("CHANNEL_USERNAME")
 SITE_URL = "https://www.estjt.ir/"
