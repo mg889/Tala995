@@ -31,7 +31,7 @@ driver = webdriver.Chrome(service=service, options=chrome_options)
 
 try:
     driver.get("https://www.estjt.ir/")
-    time.sleep(5)  # زمان برای لود کامل صفحه
+    time.sleep(5)  # برای لود کامل
 
     message_gold = "🏆 قیمت طلا:\n"
     message_coin = "💰 قیمت سکه:\n"
@@ -41,10 +41,10 @@ try:
         rows = table.find_elements(By.TAG_NAME, "tr")
         for row in rows:
             cols = row.find_elements(By.TAG_NAME, "td")
-            if len(cols) == 3:  # سه ستون داریم: تغییرات، قیمت، نام
-                change = cols[0].text.strip()  # تغییرات (چپ) - استفاده نمی‌کنیم
-                price = cols[1].text.strip()   # قیمت (وسط)
-                name = cols[2].text.strip()    # نام (راست)
+            if len(cols) == 3:
+                # ترتیب واقعی HTML: نام، قیمت، تغییرات
+                name = cols[0].text.strip()
+                price = cols[1].text.strip()
 
                 if name and price:
                     if table_index == 0:  # جدول اول = طلا
@@ -52,8 +52,8 @@ try:
                     elif table_index == 1:  # جدول دوم = سکه
                         message_coin += f"{name}: {price}\n"
 
-    final_message = message_gold + "\n" + message_coin
-    send_to_telegram(final_message.strip())
+    final_message = message_gold.strip() + "\n\n" + message_coin.strip()
+    send_to_telegram(final_message)
 
 finally:
     driver.quit()
