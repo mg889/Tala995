@@ -3,24 +3,10 @@ import os
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-
-def fetch_prices():
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-
-    # تغییر مسیر باینری در GitHub Actions
-    options.binary_location = "/usr/bin/google-chrome"
-
-    service = Service("/usr/bin/chromedriver")
-    driver = webdriver.Chrome(service=service, options=options)
-
-
+# گرفتن مقادیر از Secrets گیـت‌هاب
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHANNEL_USERNAME = os.getenv("CHANNEL_USERNAME")
 SITE_URL = "https://www.estjt.ir/"
@@ -31,10 +17,15 @@ def fetch_prices():
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    # مسیر باینری Google Chrome در GitHub Actions
+    options.binary_location = "/usr/bin/google-chrome"
 
-    driver = webdriver.Chrome(options=options)
+    # مسیر chromedriver
+    service = Service("/usr/bin/chromedriver")
+
+    driver = webdriver.Chrome(service=service, options=options)
     driver.get(SITE_URL)
-    time.sleep(5)  # برای لود کامل JS
+    time.sleep(5)  # صبر برای لود کامل JavaScript
 
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
@@ -77,8 +68,9 @@ def main():
     if has_prices_changed(text):
         send_to_channel(text)
         save_prices(text)
+        print("✅ Prices updated and sent to Telegram.")
     else:
-        print("No price change detected.")
+        print("ℹ️ No price change detected.")
 
 if __name__ == "__main__":
     main()
