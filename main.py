@@ -1,32 +1,38 @@
 import json
 import os
+import re
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 import time
 
-# ----- تنظیمات تلگرام -----
 TOKEN = "8267872006:AAFV-CA7QtN1X8AkRPIgfZPdApi6OFdYnRM"
 CHAT_ID = "@tala995"
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-
-# محل ذخیره آخرین قیمت‌ها
 LAST_FILE = "last_prices.json"
+
+
+def clean_number(text):
+    """
+    فقط عدد و ممیز را از قیمت نگه می‌دارد، همه نمادها و متن اضافی حذف می‌شود.
+    """
+    # حذف فاصله‌ها و جداکننده‌ها
+    text = text.strip().replace(',', '').replace('٬', '')
+    # نگه داشتن فقط عدد و ممیز
+    numbers = re.findall(r"\d+(\.\d+)?", text)
+    return numbers[0] if numbers else text
 
 
 def normalize_prices(data):
     """
-    یکنواخت‌سازی داده‌ها: حذف فاصله‌ها، جداکننده هزار،
-    و کاراکترهای اضافی برای مقایسه دقیق.
+    نرمالایز: نام‌ها trim، قیمت‌ها فقط عدد خالص.
     """
     norm = {}
     for k, v in data.items():
         name = k.strip()
-        # حذف کاما و جداکننده هزار فارسی
-        price = v.strip().replace(',', '').replace('٬', '')
-        norm[name] = price
-    # مرتب‌سازی بر اساس نام برای جلوگیری از اختلاف ترتیب
+        price_num = clean_number(v)
+        norm[name] = price_num
     return dict(sorted(norm.items()))
 
 
@@ -40,7 +46,6 @@ def send_to_telegram(text):
 
 
 def scrape_prices():
-    """دریافت قیمت‌ها از estjt.ir با Selenium"""
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
@@ -50,15 +55,15 @@ def scrape_prices():
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
     driver.get("https://www.estjt.ir/")
-    time.sleep(5)  # انتظار برای بارگذاری کامل صفحه
+    time.sleep(5)
 
     tables = driver.find_elements(By.TAG_NAME, "table")
     data = {}
-    for table_index, table in enumerate(tables):
+    for table in tables:
         rows = table.find_elements(By.TAG_NAME, "tr")
         for row in rows:
             cols = row.find_elements(By.TAG_NAME, "td")
-            if len(cols) == 3:  # ستون‌های نام، قیمت، تغییرات
+            if len(cols) == 3:
                 name = cols[0].text.strip()
                 price = cols[1].text.strip()
                 if name and price:
@@ -68,7 +73,6 @@ def scrape_prices():
 
 
 def prices_changed(new_data):
-    """بررسی تغییر واقعی قیمت‌ها"""
     new_data = normalize_prices(new_data)
     if not os.path.exists(LAST_FILE):
         return True
@@ -82,7 +86,6 @@ def prices_changed(new_data):
 
 
 def save_prices(data):
-    """ذخیره قیمت‌ها بعد از ارسال"""
     data = normalize_prices(data)
     with open(LAST_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
@@ -92,7 +95,6 @@ if __name__ == "__main__":
     prices = scrape_prices()
 
     if prices_changed(prices):
-        # دسته‌بندی پیام‌ها
         message_gold = "🏆 قیمت طلا:\n"
         message_coin = "💰 قیمت سکه:\n"
 
