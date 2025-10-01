@@ -22,36 +22,35 @@ def send_to_telegram(text):
 
 # ----- تنظیمات Selenium -----
 chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument("--headless")       # بدون رابط گرافیکی
+chrome_options.add_argument("--headless")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 
-service = Service("/usr/bin/chromedriver")  # مسیر کروم‌درایور در GitHub Actions
-
+service = Service("/usr/bin/chromedriver")
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
 try:
-    # بارگذاری صفحه اصلی سایت
     driver.get("https://www.estjt.ir/")
-    time.sleep(5)  # صبر برای لود کامل
+    time.sleep(5)  # زمان برای لود کامل صفحه
 
-    prices_text = ""
-    keywords = ["سکه", "طلای", "نیم", "ربع", "گرم"]
+    final_message = ""
 
-    # پیدا کردن تمام ردیف‌های جدول
-    rows = driver.find_elements(By.CSS_SELECTOR, "table tr")
-    for row in rows:
-        cols = row.find_elements(By.TAG_NAME, "td")
-        if len(cols) >= 2:
-            name = cols[0].text.strip()
-            price = cols[1].text.strip()
-            if any(keyword in name for keyword in keywords):
-                prices_text += f"{name}: {price}\n"
+    # پیدا کردن دو جدول قیمت طلا و قیمت سکه
+    tables = driver.find_elements(By.TAG_NAME, "table")
+    for table in tables:
+        rows = table.find_elements(By.TAG_NAME, "tr")
+        for row in rows:
+            cols = row.find_elements(By.TAG_NAME, "td")
+            if len(cols) >= 2:
+                name = cols[-1].text.strip()    # ستون نام (سمت راست)
+                price = cols[-2].text.strip()   # ستون قیمت (وسط)
+                if name and price:
+                    final_message += f"{name}: {price}\n"
 
-    if prices_text.strip():
-        send_to_telegram(prices_text.strip())
+    if final_message.strip():
+        send_to_telegram(final_message.strip())
     else:
-        send_to_telegram("⚠️ هیچ داده‌ای برای طلا/سکه پیدا نشد.")
+        send_to_telegram("⚠️ هیچ داده‌ای پیدا نشد.")
 
 finally:
     driver.quit()
